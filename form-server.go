@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -37,7 +36,6 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 1. Read the request body.
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, "Failed to read request body", http.StatusInternalServerError)
@@ -45,53 +43,42 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	// 2. Parse the incoming JSON into a struct (optional if you don’t need validation).
-	var newAspirasi Aspirasi
-	if err := json.Unmarshal(body, &newAspirasi); err != nil {
-		http.Error(w, "Invalid JSON", http.StatusBadRequest)
-		return
-	}
-
 	fileMutex.Lock()
 	defer fileMutex.Unlock()
 
-	// 3. Read the existing file (if any) and unmarshal into a slice.
-	existingData := []Aspirasi{}
-	if _, err := os.Stat(fileName); err == nil {
-		// File exists, read it
-		file, err := os.Open(fileName)
-		if err != nil {
-			http.Error(w, "Failed to open existing file", http.StatusInternalServerError)
-			return
-		}
-
-		if err := json.NewDecoder(file).Decode(&existingData); err != nil && err != io.EOF {
-			http.Error(w, "Failed to parse existing JSON file", http.StatusInternalServerError)
-			file.Close()
-			return
-		}
-		file.Close()
-	}
-
-	// 4. Append the new object to the slice.
-	existingData = append(existingData, newAspirasi)
-
-	// 5. Write the updated array back to the file.
-	file, err := os.Create(fileName)
+	file, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR, 0644)
 	if err != nil {
-		http.Error(w, "Failed to create output file", http.StatusInternalServerError)
+		http.Error(w, "Failed to open file for appending", http.StatusInternalServerError)
 		return
 	}
 	defer file.Close()
 
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ") // Pretty-print
-	if err := encoder.Encode(existingData); err != nil {
-		http.Error(w, "Failed to write JSON to file", http.StatusInternalServerError)
+	fileInfo, err := file.Stat()
+	if err != nil {
+		fmt.Println("Failed to stat file:", err)
+		return
+	}
+	size := fileInfo.Size()
+
+	if size == 0 {
+		file.Write([]byte("["))
+	} else {
+		_, err = file.Seek(size-1, 0)
+		if err != nil {
+			fmt.Println("Failed to seek to last byte:", err)
+			return
+		}
+		if _, err = file.Write([]byte(",")); err != nil {
+			fmt.Println("Failed to write new character:", err)
+			return
+		}
+	}
+
+	if _, err := file.Write(append(body, ']')); err != nil {
+		http.Error(w, "Failed to write to file", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with success
 	fmt.Fprintln(w, "Data appended successfully.")
 }
 
