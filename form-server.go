@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"html/template"
 	"io"
 	"log"
 	"net/http"
@@ -83,7 +85,30 @@ func handlePost(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleView(w http.ResponseWriter, r *http.Request) {
+	t, err := template.ParseFiles("view.html")
 
+	if err != nil {
+		http.Error(w, "Failed to load HTML template", http.StatusInternalServerError)
+		return
+	}
+
+	var aspirasi []Aspirasi
+
+	if _, err := os.Stat(fileName); err == nil {
+		file, err := os.Open(fileName)
+		if err != nil {
+			http.Error(w, "Failed to open existing file", http.StatusInternalServerError)
+			return
+		}
+
+		if err := json.NewDecoder(file).Decode(&aspirasi); err != nil && err != io.EOF {
+			http.Error(w, "Failed to parse existing JSON file", http.StatusInternalServerError)
+			file.Close()
+			return
+		}
+	}
+
+	t.Execute(w, aspirasi)
 }
 
 func main() {

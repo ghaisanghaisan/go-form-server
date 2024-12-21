@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hasil SERASI II</title>
+    <style>
+        table, th, td {
+          border: 1px solid #333;
+          border-collapse: collapse;
+          padding: 8px;
+        }
+        th {
+          background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Response SERASI II</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Nama</th>
+                <th>Kelas</th>
+                <th>FasilitasA</th>
+                <th>FasilitasB</th>
+                <th>FasilitasC</th>
+                <th>KBMA</th>
+                <th>KBMB</th>
+                <th>KinerjaA</th>
+                <th>KinerjaB</th>
+                <th>KinerjaC</th>
+                <th>EkskulA</th>
+                <th>EkskulB</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range . }}
+            <tr>
+                <td>{{ .Nama }}</td>
+                <td>{{ .Kelas }}</td>
+                <td>{{ .FasilitasA }}</td>
+                <td>{{ .FasilitasB }}</td>
+                <td>{{ .FasilitasC }}</td>
+                <td>{{ .KBMA }}</td>
+                <td>{{ .KBMB }}</td>
+                <td>{{ .KinerjaA }}</td>
+                <td>{{ .KinerjaB }}</td>
+                <td>{{ .KinerjaC }}</td>
+                <td>{{ .EkskulA }}</td>
+                <td>{{ .EkskulB }}</td>
+            </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</body>
+</html>
